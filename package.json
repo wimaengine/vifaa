@@ -1,0 +1,52 @@
+{
+  "name": "vifaa",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A lightweight utility library for working with colors.",
+  "license": "MIT",
+  "keywords": [
+    "color",
+    "colors",
+    "rgba",
+    "color space"
+  ],
+  "homepage": "https://github.com/wimaengine/marangi#readme",
+  "bugs": {
+    "url": "https://github.com/wimaengine/marangi/issues"
+  },
+  "scripts": {
+    "test": "node --test",
+    "build": "npm run build:lib",
+    "build:lib": "rollup -c .config/rollup.config.js",
+    "clean": "npm run clean:lib",
+    "clean:lib": "rm -r dist"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.module.js",
+      "require": "./dist/index.umd.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "author": "Wima engine contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wimaengine/marangi.git"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "rollup": "^4.60.0",
+    "rollup-plugin-dts": "^6.4.1",
+    "tslib": "^2.8.1",
+    "typescript": "~5.9.3"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "dependencies": {
+    "hisabati": "^0.1.0"
+  }
+}

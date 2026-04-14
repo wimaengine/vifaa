@@ -2,17 +2,18 @@
   "name": "vifaa",
   "version": "0.1.0",
   "type": "module",
-  "description": "A lightweight utility library for working with colors.",
+  "description": "A lightweight TypeScript library for data structures and graph algorithms.",
   "license": "MIT",
   "keywords": [
-    "color",
-    "colors",
-    "rgba",
-    "color space"
+    "data structures",
+    "graph",
+    "algorithms",
+    "priority queue",
+    "bitset"
   ],
-  "homepage": "https://github.com/wimaengine/marangi#readme",
+  "homepage": "https://github.com/wimaengine/vifaa#readme",
   "bugs": {
-    "url": "https://github.com/wimaengine/marangi/issues"
+    "url": "https://github.com/wimaengine/vifaa/issues"
   },
   "scripts": {
     "test": "node --test",
@@ -31,7 +32,7 @@
   "author": "Wima engine contributors",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wimaengine/marangi.git"
+    "url": "git+https://github.com/wimaengine/vifaa.git"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.3",

@@ -64,18 +64,7 @@ export class Graph<T = unknown, U = unknown> {
   }
 
   hasEdge(from: NodeId, to: NodeId): boolean {
-    for (let edgeId = this.nodes[from]?.next[0]; edgeId !== undefined; edgeId = this.edges[edgeId]?.next[0]) {
-      const edge = this.edges[edgeId]
-      if (!edge) {
-        break
-      }
-
-      if (edge.to === to) {
-        return true
-      }
-    }
-
-    return false
+    return this.findEdgeId(from, to) !== undefined
   }
 
   getNodeWeight(id: NodeId): T | undefined {
@@ -249,6 +238,21 @@ export class Graph<T = unknown, U = unknown> {
 
   getEdgeCount(): number {
     return this.edges.length
+  }
+
+  findEdgeId(from: NodeId, to: NodeId): EdgeId | undefined {
+    for (let edgeId = this.nodes[from]?.next[0]; edgeId !== undefined; edgeId = this.edges[edgeId]?.next[0]) {
+      const edge = this.edges[edgeId]
+      if (!edge) {
+        break
+      }
+
+      if (edge.to === to) {
+        return edgeId
+      }
+    }
+
+    return undefined
   }
 }
 

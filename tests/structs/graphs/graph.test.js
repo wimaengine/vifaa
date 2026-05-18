@@ -29,6 +29,45 @@ test('Graph addEdge increases edge count', () => {
   assert.equal(graph.getEdgeCount(), 1)
 })
 
+test('Graph findEdgeId returns the edge id for existing node pairs', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+  const edge = graph.addEdgeUnchecked(a, b, 1)
+
+  assert.equal(graph.findEdgeId(a, b), edge)
+})
+
+test('Graph findEdgeId returns undefined for missing node pairs', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+
+  assert.equal(graph.findEdgeId(a, b), undefined)
+})
+
+test('Graph findEdgeId returns the most recent matching edge id', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+  const firstEdge = graph.addEdgeUnchecked(a, b, 1)
+  const secondEdge = graph.addEdgeUnchecked(a, b, 2)
+
+  assert.equal(graph.findEdgeId(a, b), secondEdge)
+  assert.notEqual(secondEdge, firstEdge)
+})
+
+test('Graph findEdgeId reflects removals', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+  const edge = graph.addEdgeUnchecked(a, b, 1)
+
+  graph.removeEdge(edge)
+
+  assert.equal(graph.findEdgeId(a, b), undefined)
+})
+
 test('Graph node and edge counts reflect inserted elements', () => {
   const graph = new Graph(true)
   const a = graph.addNode('A')

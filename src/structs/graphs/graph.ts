@@ -63,6 +63,21 @@ export class Graph<T = unknown, U = unknown> {
     return this.edges[id]
   }
 
+  hasEdge(from: NodeId, to: NodeId): boolean {
+    for (let edgeId = this.nodes[from]?.next[0]; edgeId !== undefined; edgeId = this.edges[edgeId]?.next[0]) {
+      const edge = this.edges[edgeId]
+      if (!edge) {
+        break
+      }
+
+      if (edge.to === to) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   getNodeWeight(id: NodeId): T | undefined {
     const node = this.getNode(id)
     if (!node) {

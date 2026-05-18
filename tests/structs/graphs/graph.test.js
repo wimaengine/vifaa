@@ -54,6 +54,21 @@ test('Graph getEdgeWeight returns stored edge weight', () => {
   assert.equal(graph.getEdgeWeight(edge), 7)
 })
 
+test('Graph hasEdge returns true for existing node pairs', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+  graph.addEdge(a, b, 1)
+
+  assert.equal(graph.hasEdge(a, b), true)
+})
+
+test('Graph hasEdge return false for missing ids', () => {
+  const graph = new Graph(true)
+
+  assert.equal(graph.hasEdge(0, 1), false)
+})
+
 test('Graph setNodeWeight updates node value', () => {
   const graph = new Graph(true)
   const a = graph.addNode('A')
@@ -214,4 +229,27 @@ test('Graph removeEdge returns false for non-existent id', () => {
 test('Graph removeNode returns false for non-existent id', () => {
   const graph = new Graph(true)
   assert.equal(graph.removeNode(0), false)
+})
+
+test('Graph hasEdge reflect removals', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+  const edge = graph.addEdge(a, b, 1)
+
+  graph.removeEdge(edge)
+  graph.removeNode(b)
+
+  assert.equal(graph.hasEdge(a, b), false)
+})
+
+test('Graph hasEdge respects edge direction', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+
+  graph.addEdge(a, b, 1)
+
+  assert.equal(graph.hasEdge(a, b), true)
+  assert.equal(graph.hasEdge(b, a), false)
 })

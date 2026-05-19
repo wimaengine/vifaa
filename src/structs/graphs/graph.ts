@@ -40,20 +40,14 @@ export class Graph<T = unknown, U = unknown> {
   }
 
   addEdge(from: NodeId, to: NodeId, weight: U): EdgeId {
-    const id = this.edges.length
-    const edge = new Edge(from, to, weight)
+    const existingId = this.findEdgeId(from, to)
+    if (existingId !== undefined) {
+      return existingId
+    }
 
-    this.edges.push(edge)
-    const nodeA = this.nodes[from]
-    const nodeB = this.nodes[to]
-
-    edge.next[0] = nodeA.next[0]
-    edge.next[1] = nodeB.next[1]
-    nodeA.next[0] = id
-    nodeB.next[1] = id
-
-    return id
+    return this.addEdgeUnchecked(from, to, weight)
   }
+
 
   getNode(id: NodeId): Node<T> | undefined {
     return this.nodes[id]

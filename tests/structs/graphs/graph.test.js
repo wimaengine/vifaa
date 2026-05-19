@@ -29,6 +29,31 @@ test('Graph addEdge increases edge count', () => {
   assert.equal(graph.getEdgeCount(), 1)
 })
 
+test('Graph addEdge does not insert duplicate edges', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+
+  const firstEdge = graph.addEdge(a, b, 1)
+  const secondEdge = graph.addEdge(a, b, 2)
+
+  assert.equal(secondEdge, firstEdge)
+  assert.equal(graph.getEdgeCount(), 1)
+  assert.equal(graph.getEdgeWeight(firstEdge), 1)
+})
+
+test('Graph addEdgeUnchecked inserts duplicate edges', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+
+  const firstEdge = graph.addEdgeUnchecked(a, b, 1)
+  const secondEdge = graph.addEdgeUnchecked(a, b, 2)
+
+  assert.notEqual(secondEdge, firstEdge)
+  assert.equal(graph.getEdgeCount(), 2)
+})
+
 test('Graph findEdgeId returns the edge id for existing node pairs', () => {
   const graph = new Graph(true)
   const a = graph.addNode('A')

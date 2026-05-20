@@ -133,6 +133,62 @@ test('Graph hasEdge return false for missing ids', () => {
   assert.equal(graph.hasEdge(0, 1), false)
 })
 
+test('Graph undirected hasEdge treats reverse endpoints as the same edge', () => {
+  const graph = new Graph(false)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+
+  graph.addEdge(a, b, 1)
+
+  assert.equal(graph.hasEdge(a, b), true)
+  assert.equal(graph.hasEdge(b, a), true)
+})
+
+test('Graph undirected addEdge rejects reverse duplicates', () => {
+  const graph = new Graph(false)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+
+  const firstEdge = graph.addEdge(a, b, 1)
+  const secondEdge = graph.addEdge(b, a, 2)
+
+  assert.equal(secondEdge, firstEdge)
+  assert.equal(graph.getEdgeCount(), 1)
+  assert.equal(graph.getEdgeWeight(firstEdge), 1)
+})
+
+test('Graph undirected findEdgeId matches either endpoint order', () => {
+  const graph = new Graph(false)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+  const edge = graph.addEdgeUnchecked(b, a, 1)
+
+  assert.equal(graph.findEdgeId(a, b), edge)
+  assert.equal(graph.findEdgeId(b, a), edge)
+})
+
+test('Graph undirected neighbours are reachable from both endpoints', () => {
+  const graph = new Graph(false)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+
+  graph.addEdgeUnchecked(a, b, 1)
+
+  assert.deepEqual([...graph.getNeighbours(a)], [b])
+  assert.deepEqual([...graph.getNeighbours(b)], [a])
+})
+
+test('Graph undirected node edges are reachable from both endpoints', () => {
+  const graph = new Graph(false)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+
+  graph.addEdgeUnchecked(b, a, 1)
+
+  assert.equal([...graph.getNodeEdges(a)].length, 1)
+  assert.equal([...graph.getNodeEdges(b)].length, 1)
+})
+
 test('Graph setNodeWeight updates node value', () => {
   const graph = new Graph(true)
   const a = graph.addNode('A')

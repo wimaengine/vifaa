@@ -250,18 +250,35 @@ export class Graph<T = unknown, U = unknown> {
   }
 
   findEdgeId(from: NodeId, to: NodeId): EdgeId | undefined {
-    for (let edgeId = this.nodes[from]?.next[0]; edgeId !== undefined; edgeId = this.edges[edgeId]?.next[0]) {
-      const edge = this.edges[edgeId]
-      if (!edge) {
-        break
-      }
+    const node = this.nodes[from]
+    if (!node) {
+      return undefined
+    }
 
-      if (edge.to === to) {
-        return edgeId
+    const directions: Array<0 | 1> = this.directed ? [0] : [0, 1]
+
+    for (const dir of directions) {
+      for (let edgeId = node.next[dir]; edgeId !== undefined; edgeId = this.edges[edgeId]?.next[dir]) {
+        const edge = this.edges[edgeId]
+        if (!edge) {
+          break
+        }
+
+        if (this.#edgeMatches(edge, from, to)) {
+          return edgeId
+        }
       }
     }
 
     return undefined
+  }
+
+  #edgeMatches(edge: Edge<U>, from: NodeId, to: NodeId): boolean {
+    if (this.directed) {
+      return edge.from === from && edge.to === to
+    }
+
+    return (edge.from === from && edge.to === to) || (edge.from === to && edge.to === from)
   }
 }
 
@@ -275,29 +292,63 @@ export class GraphNodeEdgesIterator<T, U> {
   }
 
   *[Symbol.iterator](): IterableIterator<Edge<U>> {
-    let edgeId = this.graph.getNode(this.nodeid)?.next[0]
-    while (edgeId !== undefined) {
-      const edge = this.graph.getEdge(edgeId)
+    const node = this.graph.getNode(this.nodeid)
+    if (!node) {
+      return
+    }
 
+    if (this.graph.directed) {
+      for (let edgeId = node.next[0]; edgeId !== undefined; edgeId = this.graph.getEdge(edgeId)?.next[0]) {
+        const edge = this.graph.getEdge(edgeId)
+        if (!edge) {
+          break
+        }
+
+        yield edge
+      }
+      return
+    }
+
+    for (let edgeId = node.next[0]; edgeId !== undefined; edgeId = this.graph.getEdge(edgeId)?.next[0]) {
+      const edge = this.graph.getEdge(edgeId)
       if (!edge) {
         break
       }
-      yield edge
-      edgeId = edge.next[0]
+
+      if (edge.from === this.nodeid) {
+        yield edge
+      }
+    }
+
+    for (let edgeId = node.next[1]; edgeId !== undefined; edgeId = this.graph.getEdge(edgeId)?.next[1]) {
+      const edge = this.graph.getEdge(edgeId)
+      if (!edge) {
+        break
+      }
+
+      if (edge.to === this.nodeid) {
+        yield edge
+      }
     }
   }
 }
 
 export class GraphNeighbourIterator<T, U> {
-  private edgeIter: GraphNodeEdgesIterator<T, U>
+  private graph: Graph<T, U>
+  private nodeid: NodeId
 
   constructor(graph: Graph<T, U>, nodeid: NodeId) {
-    this.edgeIter = new GraphNodeEdgesIterator(graph, nodeid)
+    this.graph = graph
+    this.nodeid = nodeid
   }
 
   *[Symbol.iterator](): IterableIterator<NodeId> {
-    for (const edge of this.edgeIter) {
-      yield edge.to
+    for (const edge of new GraphNodeEdgesIterator(this.graph, this.nodeid)) {
+      if (this.graph.directed || edge.from === this.nodeid) {
+        yield edge.to
+      } else {
+        yield edge.from
+      }
     }
   }
 }

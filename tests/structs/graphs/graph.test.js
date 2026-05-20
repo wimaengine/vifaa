@@ -182,8 +182,8 @@ test('Graph removeEdge on head edge keeps remaining neighbour reachable', () => 
   const a = graph.addNode('A')
   const b = graph.addNode('B')
 
-  const e1 = graph.addEdge(a, b, 1)
-  graph.addEdge(a, b, 2)
+  const e1 = graph.addEdgeUnchecked(a, b, 1)
+  graph.addEdgeUnchecked(a, b, 2)
 
   graph.removeEdge(e1)
 

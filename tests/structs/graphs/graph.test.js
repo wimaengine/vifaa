@@ -167,26 +167,24 @@ test('Graph undirected findEdgeId matches either endpoint order', () => {
   assert.equal(graph.findEdgeId(b, a), edge)
 })
 
-test('Graph undirected neighbours are reachable from both endpoints', () => {
+test('Graph undirected forEachNeighbour visits both endpoints once', () => {
   const graph = new Graph(false)
   const a = graph.addNode('A')
   const b = graph.addNode('B')
 
   graph.addEdgeUnchecked(a, b, 1)
 
-  assert.deepEqual([...graph.getNeighbours(a)], [b])
-  assert.deepEqual([...graph.getNeighbours(b)], [a])
-})
+  const fromA = []
+  const fromB = []
+  graph.forEachNeighbour(a, (neighbour) => {
+    fromA.push(neighbour)
+  })
+  graph.forEachNeighbour(b, (neighbour) => {
+    fromB.push(neighbour)
+  })
 
-test('Graph undirected node edges are reachable from both endpoints', () => {
-  const graph = new Graph(false)
-  const a = graph.addNode('A')
-  const b = graph.addNode('B')
-
-  graph.addEdgeUnchecked(b, a, 1)
-
-  assert.equal([...graph.getNodeEdges(a)].length, 1)
-  assert.equal([...graph.getNodeEdges(b)].length, 1)
+  assert.deepEqual(fromA, [b])
+  assert.deepEqual(fromB, [a])
 })
 
 test('Graph setNodeWeight updates node value', () => {
@@ -209,7 +207,7 @@ test('Graph setEdgeWeight updates edge value', () => {
   assert.equal(graph.getEdgeWeight(edge), 9)
 })
 
-test('Graph getNeighbours returns connected node ids', () => {
+test('Graph forEachNeighbour visits connected node ids', () => {
   const graph = new Graph(true)
   const a = graph.addNode('A')
   const b = graph.addNode('B')
@@ -218,19 +216,12 @@ test('Graph getNeighbours returns connected node ids', () => {
   graph.addEdge(a, b, 1)
   graph.addEdge(a, c, 2)
 
-  assert.deepEqual([...graph.getNeighbours(a)], [c, b])
-})
+  const neighbours = []
+  graph.forEachNeighbour(a, (neighbour) => {
+    neighbours.push(neighbour)
+  })
 
-test('Graph getNodeEdges returns outgoing edges for a node', () => {
-  const graph = new Graph(true)
-  const a = graph.addNode('A')
-  const b = graph.addNode('B')
-  const c = graph.addNode('C')
-
-  graph.addEdge(a, b, 1)
-  graph.addEdge(a, c, 2)
-
-  assert.equal([...graph.getNodeEdges(a)].length, 2)
+  assert.deepEqual(neighbours, [c, b])
 })
 
 test('Graph removeEdge on head edge keeps remaining neighbour reachable', () => {
@@ -243,7 +234,12 @@ test('Graph removeEdge on head edge keeps remaining neighbour reachable', () => 
 
   graph.removeEdge(e1)
 
-  assert.equal([...graph.getNeighbours(a)].length, 1)
+  const neighbours = []
+  graph.forEachNeighbour(a, (neighbour) => {
+    neighbours.push(neighbour)
+  })
+
+  assert.equal(neighbours.length, 1)
 })
 
 test('Graph removeEdge from middle shrinks edge count by one', () => {

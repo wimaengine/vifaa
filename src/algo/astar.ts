@@ -45,20 +45,20 @@ export function aStar<T, U>(
       break
     }
 
-    for (const neighbourid of graph.getNeighbours(currentid)) {
+    graph.forEachNeighbour(currentid, (neighbourid) => {
       if (visited.has(neighbourid)) {
-        continue
+        return
       }
 
       const neighbour = graph.getNode(neighbourid)
       if (!neighbour) {
-        continue
+        return
       }
 
       const neighborPathNode = path.get(neighbourid)
       const currentPathNode = path.get(currentid)
       if (!currentPathNode) {
-        continue
+        return
       }
 
       const cost = currentPathNode.gCost + costFunc(current.weight, neighbour.weight)
@@ -72,7 +72,7 @@ export function aStar<T, U>(
         unvisited.push([neighbourid, cost])
         path.set(neighbourid, new GraphPathNode(currentid, cost, costFunc(neighbour.weight, target.weight)))
       }
-    }
+    })
   }
 
   return path

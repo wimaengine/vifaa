@@ -16,11 +16,11 @@ export function bfs<T, U>(graph: Graph<T, U>, start: NodeId, visit: (nodeId: Nod
 
     visit(nodeId)
 
-    for (const neighbour of graph.getNeighbours(nodeId)) {
+    graph.forEachNeighbour(nodeId, (neighbour) => {
       if (!visited[neighbour]) {
         visited[neighbour] = true
         queue.push(neighbour)
       }
-    }
+    })
   }
 }

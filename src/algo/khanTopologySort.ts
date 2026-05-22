@@ -23,12 +23,12 @@ export function kahnTopologySort<T, U>(graph: Graph<T, U>): NodeId[] | undefined
     const nodeId = queue[head]
     sorted.push(nodeId)
 
-    for (const neigh of graph.getNeighbours(nodeId)) {
+    graph.forEachNeighbour(nodeId, (neigh) => {
       inDegree[neigh] -= 1
       if (inDegree[neigh] === 0) {
         queue.push(neigh)
       }
-    }
+    })
 
     head += 1
   }

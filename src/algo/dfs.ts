@@ -20,10 +20,10 @@ export function dfs<T, U>(graph: Graph<T, U>, start: NodeId, visit: (nodeId: Nod
     visited[nodeId] = true
     visit(nodeId)
 
-    for (const neighbour of graph.getNeighbours(nodeId)) {
+    graph.forEachNeighbour(nodeId, (neighbour) => {
       if (!visited[neighbour]) {
         stack.push(neighbour)
       }
-    }
+    })
   }
 }

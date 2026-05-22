@@ -34,9 +34,9 @@ export function dijkstra<T, U>(
     const current = graph.getNode(currentid)
     const currentPathNode = path.getOrSet(currentid)
 
-    for (const neighbourid of graph.getNeighbours(currentid)) {
+    graph.forEachNeighbour(currentid, (neighbourid) => {
       if (visited.has(neighbourid)) {
-        continue
+        return
       }
 
       const neighbour = graph.getNode(neighbourid)
@@ -52,7 +52,7 @@ export function dijkstra<T, U>(
         unvisited.push(neighbourid)
         path.set(neighbourid, new GraphPathNode(currentid, cost))
       }
-    }
+    })
   }
 
   return path

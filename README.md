@@ -18,7 +18,7 @@ Graph model:
 - `Graph<TNode, TEdge>` stores node weights and edge weights separately.
 - Each `addNode(weight)` returns a numeric `NodeId`.
 - Each `addEdge(from, to, weight)` returns a numeric `EdgeId`.
-- You can traverse adjacency with `getNeighbours(nodeId)` and `getNodeEdges(nodeId)`.
+- You can traverse adjacency with `forEachNeighbour(nodeId, callback)` and `forEachNodeEdge(nodeId, callback)`.
 - Node/edge removal is unstable for performance, so IDs may be remapped after removal.
 
 General-purpose structures:

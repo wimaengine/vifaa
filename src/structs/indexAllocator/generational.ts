@@ -1,4 +1,4 @@
-import { packInto64Int, unpackFrom64Int } from "../../utils";
+import { packInto64Int, unpackFrom64Int } from "../../pack";
 
 export class GenerationalIndexAllocator<T extends number = number> {
   private nextid = 0

@@ -1,12 +1,53 @@
 export type EdgeId = number
 export type NodeId = number
 
+export type NodeSerial<T = unknown> = {
+  next: [EdgeId | undefined, EdgeId | undefined]
+  weight: T
+}
+
+
 export class Node<T> {
   next: [EdgeId | undefined, EdgeId | undefined] = [undefined, undefined]
   weight: T
 
   constructor(weight: T) {
     this.weight = weight
+  }
+
+  serialize() {
+    return Node.serialize(this)
+  }
+
+  /**
+   * @param {unknown} value
+   */
+  static serialize<T>(value: Node<T>) {
+    return {
+      next: value.next,
+      weight: value.weight
+    }
+  }
+
+  static validSerial<T>(value: unknown): value is NodeSerial<T> {
+    return !!value
+      && typeof value === 'object'
+      && Array.isArray((value as NodeSerial<T>).next)
+      && (value as NodeSerial<T>).next.length === 2
+      && ((value as NodeSerial<T>).next[0] === undefined || typeof (value as NodeSerial<T>).next[0] === 'number')
+      && ((value as NodeSerial<T>).next[1] === undefined || typeof (value as NodeSerial<T>).next[1] === 'number')
+      && 'weight' in (value as object)
+  }
+
+  /**
+   * @param {NodeSerial<T>} value
+   * @param {Node<T>} [out]
+   */
+  static deserialize<T>(value: NodeSerial<T>, out = new Node(undefined as unknown as T)) {
+    out.next = value.next
+    out.weight = value.weight
+
+    return out
   }
 }
 

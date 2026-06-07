@@ -1,31 +1,35 @@
 import { IndexAllocator } from './indexallocator'
 
-export class DenseList<T, I extends number = number> {
+export class DenseList<T, Index extends number = number, Allocator extends IndexAllocator<Index> = IndexAllocator<Index>> {
   private list: T[] = []
-  private allocator: IndexAllocator<I> = new IndexAllocator<I>()
+  private allocator: Allocator
 
-  push(object: T): I {
+  constructor(allocator: Allocator){
+    this.allocator = allocator
+  }
+
+  push(object: T): Index {
     const index = this.allocator.reserve()
     this.list[index] = object
     return index
   }
 
-  recycle(index: I): void {
+  recycle(index: Index): void {
     this.allocator.recycle(index)
   }
 
-  get(index: I): T | undefined {
+  get(index: Index): T | undefined {
     return this.list[index]
   }
 
-  set(index: I, object: T): void {
+  set(index: Index, object: T): void {
     if (index > this.allocator.count()) {
       throw new Error('The index provided has never been allocated')
     }
     this.list[index] = object
   }
 
-  reserve(): I {
+  reserve(): Index {
     return this.allocator.reserve()
   }
 

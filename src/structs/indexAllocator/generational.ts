@@ -20,7 +20,7 @@ export class GenerationalIndexAllocator<T extends number = number> {
     const index = this.nextid
     this.nextid += 1
 
-    return packInto64Int(index, 0) as T
+    return packInto64Int(index, 1) as T
   }
 
   count(): number {

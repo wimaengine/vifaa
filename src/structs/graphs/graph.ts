@@ -6,6 +6,12 @@ export type NodeSerial<T = unknown> = {
   weight: T
 }
 
+export type EdgeSerial<T = unknown> = {
+  from: NodeId
+  to: NodeId
+  next: [EdgeId | undefined, EdgeId | undefined]
+  weight: T
+}
 
 export class Node<T> {
   next: [EdgeId | undefined, EdgeId | undefined] = [undefined, undefined]
@@ -61,6 +67,47 @@ export class Edge<T> {
     this.from = from
     this.to = to
     this.weight = weight
+  }
+
+  serialize() {
+    return Edge.serialize(this)
+  }
+
+  /**
+   * @param {unknown} value
+   */
+  static serialize<T>(value: Edge<T>) {
+    return {
+      from: value.from,
+      to: value.to,
+      next: value.next,
+      weight: value.weight
+    }
+  }
+
+  static validSerial<T>(value: unknown): value is EdgeSerial<T> {
+    return !!value
+      && typeof value === 'object'
+      && typeof (value as EdgeSerial<T>).from === 'number'
+      && typeof (value as EdgeSerial<T>).to === 'number'
+      && Array.isArray((value as EdgeSerial<T>).next)
+      && (value as EdgeSerial<T>).next.length === 2
+      && ((value as EdgeSerial<T>).next[0] === undefined || typeof (value as EdgeSerial<T>).next[0] === 'number')
+      && ((value as EdgeSerial<T>).next[1] === undefined || typeof (value as EdgeSerial<T>).next[1] === 'number')
+      && 'weight' in (value as object)
+  }
+
+  /**
+   * @param {EdgeSerial<T>} value
+   * @param {Edge<T>} [out]
+   */
+  static deserialize<T>(value: EdgeSerial<T>, out = new Edge(undefined as unknown as NodeId, undefined as unknown as NodeId, undefined as unknown as T)) {
+    out.from = value.from
+    out.to = value.to
+    out.next = value.next
+    out.weight = value.weight
+
+    return out
   }
 }
 

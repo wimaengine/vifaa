@@ -1,11 +1,176 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { Graph } from '../../../dist/index.module.js'
+import { Edge, Graph, Node } from '../../../dist/index.module.js'
 
 test('Graph constructor stores directed flag', () => {
   const graph = new Graph(true)
   assert.equal(graph.directed, true)
+})
+
+test('Graph serialize returns plain data', () => {
+  const graph = new Graph(true)
+  const a = graph.addNode('A')
+  const b = graph.addNode('B')
+  graph.addEdge(a, b, 7)
+
+  assert.deepEqual(graph.serialize(), {
+    directed: true,
+    nodes: [
+      {
+        next: [0, undefined],
+        weight: 'A'
+      },
+      {
+        next: [undefined, 0],
+        weight: 'B'
+      }
+    ],
+    edges: [
+      {
+        from: a,
+        to: b,
+        next: [undefined, undefined],
+        weight: 7
+      }
+    ]
+  })
+})
+
+test('Graph validSerial accepts the expected shape', () => {
+  assert.equal(Graph.validSerial({
+    directed: true,
+    nodes: [
+      {
+        next: [0, undefined],
+        weight: 'A'
+      }
+    ],
+    edges: [
+      {
+        from: 0,
+        to: 1,
+        next: [undefined, undefined],
+        weight: 2
+      }
+    ]
+  }), true)
+})
+
+test('Graph validSerial rejects malformed data', () => {
+  assert.equal(Graph.validSerial({
+    directed: true,
+    nodes: [
+      {
+        next: [0],
+        weight: 'A'
+      }
+    ],
+    edges: []
+  }), false)
+})
+
+test('Graph deserialize restores data into an existing graph', () => {
+  const source = new Graph(true)
+  const a = source.addNode('A')
+  const b = source.addNode('B')
+  source.addEdge(a, b, 7)
+
+  const out = new Graph(true)
+  const graph = Graph.deserialize(source.serialize(), out)
+
+  assert.equal(graph, out)
+  assert.equal(graph.directed, true)
+  assert.equal(graph.getNodeCount(), 2)
+  assert.equal(graph.getEdgeCount(), 1)
+  assert.equal(graph.getNodeWeight(0), 'A')
+  assert.equal(graph.getNodeWeight(1), 'B')
+  assert.equal(graph.getEdgeWeight(0), 7)
+  assert.equal(graph.findEdgeId(0, 1), 0)
+})
+
+test('Node serialize returns plain data', () => {
+  const node = new Node('A')
+  node.next = [2, 4]
+
+  assert.deepEqual(node.serialize(), {
+    next: [2, 4],
+    weight: 'A'
+  })
+})
+
+test('Node deserialize restores data into an existing node', () => {
+  const out = new Node('placeholder')
+
+  const node = Node.deserialize({
+    next: [7, undefined],
+    weight: 'B'
+  }, out)
+
+  assert.equal(node, out)
+  assert.deepEqual(node.next, [7, undefined])
+  assert.equal(node.weight, 'B')
+})
+
+test('Node validSerial accepts the expected shape', () => {
+  assert.equal(Node.validSerial({
+    next: [1, undefined],
+    weight: 'B'
+  }), true)
+})
+
+test('Node validSerial rejects malformed data', () => {
+  assert.equal(Node.validSerial({
+    next: [1],
+    weight: 'B'
+  }), false)
+})
+
+test('Edge serialize returns plain data', () => {
+  const edge = new Edge(1, 2, 3)
+  edge.next = [4, 5]
+
+  assert.deepEqual(edge.serialize(), {
+    from: 1,
+    to: 2,
+    next: [4, 5],
+    weight: 3
+  })
+})
+
+test('Edge deserialize restores data into an existing edge', () => {
+  const out = new Edge(0, 0, 0)
+
+  const edge = Edge.deserialize({
+    from: 8,
+    to: 9,
+    next: [10, undefined],
+    weight: 11
+  }, out)
+
+  assert.equal(edge, out)
+  assert.equal(edge.from, 8)
+  assert.equal(edge.to, 9)
+  assert.deepEqual(edge.next, [10, undefined])
+  assert.equal(edge.weight, 11)
+})
+
+test('Edge validSerial accepts the expected shape', () => {
+  assert.equal(Edge.validSerial({
+    from: 1,
+    to: 2,
+    next: [3, undefined],
+    weight: 4
+  }), true)
+})
+
+test('Edge validSerial rejects malformed data', () => {
+  assert.equal(Edge.validSerial({
+    from: 1,
+    to: '2',
+    next: [3, undefined],
+    weight: 4
+  }), false)
 })
 
 test('Graph addNode returns sequential ids', () => {

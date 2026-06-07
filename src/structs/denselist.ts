@@ -1,4 +1,4 @@
-import { IndexAllocator } from './indexallocator'
+import { IndexAllocator } from './indexAllocator'
 
 export class DenseList<T, Index extends number = number, Allocator extends IndexAllocator<Index> = IndexAllocator<Index>> {
   private list: T[] = []

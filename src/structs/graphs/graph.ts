@@ -13,6 +13,12 @@ export type EdgeSerial<T = unknown> = {
   weight: T
 }
 
+export type GraphSerial<T = unknown, U = unknown> = {
+  directed: boolean
+  nodes: NodeSerial<T>[]
+  edges: EdgeSerial<U>[]
+}
+
 export class Node<T> {
   next: [EdgeId | undefined, EdgeId | undefined] = [undefined, undefined]
   weight: T
@@ -118,6 +124,42 @@ export class Graph<T = unknown, U = unknown> {
 
   constructor(directed: boolean) {
     this.directed = directed
+  }
+
+  serialize() {
+    return Graph.serialize(this)
+  }
+
+  /**
+   * @param {Graph<T, U>} value
+   */
+  static serialize<T, U>(value: Graph<T, U>) {
+    return {
+      directed: value.directed,
+      nodes: value.nodes.map((node) => Node.serialize(node)),
+      edges: value.edges.map((edge) => Edge.serialize(edge))
+    }
+  }
+
+  static validSerial<T, U>(value: unknown): value is GraphSerial<T, U> {
+    return !!value
+      && typeof value === 'object'
+      && typeof (value as GraphSerial<T, U>).directed === 'boolean'
+      && Array.isArray((value as GraphSerial<T, U>).nodes)
+      && Array.isArray((value as GraphSerial<T, U>).edges)
+      && (value as GraphSerial<T, U>).nodes.every((node) => Node.validSerial<T>(node))
+      && (value as GraphSerial<T, U>).edges.every((edge) => Edge.validSerial<U>(edge))
+  }
+
+  /**
+   * @param {GraphSerial<T, U>} value
+   * @param {Graph<T, U>} [out]
+   */
+  static deserialize<T, U>(value: GraphSerial<T, U>, out = new Graph<T, U>(value.directed)) {
+    out.nodes = value.nodes.map((node) => Node.deserialize(node))
+    out.edges = value.edges.map((edge) => Edge.deserialize(edge))
+
+    return out
   }
 
   addNode(weight: T): NodeId {

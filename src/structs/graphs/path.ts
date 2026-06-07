@@ -1,5 +1,11 @@
 import type { NodeId } from './graph'
 
+export type GraphPathNodeSerial = {
+  parent: NodeId | undefined
+  gCost: number
+  hCost: number
+}
+
 export class GraphPathNode {
   gCost: number
   hCost: number
@@ -11,8 +17,44 @@ export class GraphPathNode {
     this.hCost = hCost
   }
 
+  serialize() {
+    return GraphPathNode.serialize(this)
+  }
+
   fCost(): number {
     return this.gCost + this.hCost
+  }
+
+  /**
+   * @param {unknown} value
+   */
+  static serialize(value: GraphPathNode) {
+    return {
+      parent: value.parent,
+      gCost: value.gCost,
+      hCost: value.hCost
+    }
+  }
+
+  static validSerial(value: unknown): value is GraphPathNodeSerial {
+    return !!value
+      && typeof value === 'object'
+      && (typeof (value as GraphPathNodeSerial).parent === 'number'
+        || typeof (value as GraphPathNodeSerial).parent === 'undefined')
+      && typeof (value as GraphPathNodeSerial).gCost === 'number'
+      && typeof (value as GraphPathNodeSerial).hCost === 'number'
+  }
+
+  /**
+   * @param {GraphPathNodeSerial} value
+   * @param {GraphPathNode} [out]
+   */
+  static deserialize(value: GraphPathNodeSerial, out = new GraphPathNode()) {
+    out.parent = value.parent
+    out.gCost = value.gCost
+    out.hCost = value.hCost
+
+    return out
   }
 }
 

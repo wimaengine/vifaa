@@ -1,3 +1,5 @@
+import type { EdgeIterable, NeighbourIterable } from '../../core'
+
 export type EdgeId = number
 export type NodeId = number
 
@@ -117,7 +119,7 @@ export class Edge<T> {
   }
 }
 
-export class Graph<T = unknown, U = unknown> {
+export class Graph<T = unknown, U = unknown> implements NeighbourIterable<NodeId>, EdgeIterable<NodeId, EdgeId> {
   private nodes: Node<T>[] = []
   private edges: Edge<U>[] = []
   readonly directed: boolean
@@ -222,7 +224,7 @@ export class Graph<T = unknown, U = unknown> {
     return edge.weight
   }
 
-  forEachNodeEdge(id: NodeId, callback: (edge: Edge<U>) => void): void {
+  forEachEdge(id: NodeId, callback: (edgeId: EdgeId) => void): void {
     const node = this.getNode(id)
     if (!node) {
       return
@@ -230,12 +232,11 @@ export class Graph<T = unknown, U = unknown> {
 
     if (this.directed) {
       for (let edgeId = node.next[0]; edgeId !== undefined; edgeId = this.getEdge(edgeId)?.next[0]) {
-        const edge = this.getEdge(edgeId)
-        if (!edge) {
+        if (!this.getEdge(edgeId)) {
           break
         }
 
-        callback(edge)
+        callback(edgeId)
       }
       return
     }
@@ -247,7 +248,7 @@ export class Graph<T = unknown, U = unknown> {
       }
 
       if (edge.from === id) {
-        callback(edge)
+        callback(edgeId)
       }
     }
 
@@ -258,13 +259,18 @@ export class Graph<T = unknown, U = unknown> {
       }
 
       if (edge.to === id && edge.from !== id) {
-        callback(edge)
+        callback(edgeId)
       }
     }
   }
 
   forEachNeighbour(id: NodeId, callback: (nodeId: NodeId) => void): void {
-    this.forEachNodeEdge(id, (edge) => {
+    this.forEachEdge(id, (edgeId) => {
+      const edge = this.getEdge(edgeId)
+      if (!edge) {
+        return
+      }
+
       if (this.directed || edge.from === id) {
         callback(edge.to)
       } else {

@@ -1,13 +1,8 @@
 import type { EdgeAccessor, EdgeIterable, NeighbourIterable, NodeAccessor, NodeEdgeIterable } from '../../core'
 import type { EdgeId, NodeId } from '../../core/identifiers'
-import type { EdgeSerial, NodeSerial } from '../../core/serial'
+import type { GraphSerial } from '../../core/serial'
+import { validateGraphSerial } from '../../core/serial'
 import { Edge, Node } from './graph'
-
-export type GraphMapSerial<T = unknown, U = unknown> = {
-  directed: boolean
-  nodes: Array<NodeSerial<T> | undefined>
-  edges: Array<EdgeSerial<U> | undefined>
-}
 
 export class GraphMap<T = unknown, U = unknown> implements
   NodeAccessor<Node<T>, NodeId>,
@@ -29,68 +24,8 @@ export class GraphMap<T = unknown, U = unknown> implements
     this.directed = directed
   }
 
-  serialize(): GraphMapSerial<T, U> {
+  serialize(): GraphSerial<T, U> {
     return GraphMap.serialize(this)
-  }
-
-  static serialize<T, U>(value: GraphMap<T, U>) {
-    const nodes: Array<NodeSerial<T> | undefined> = []
-    const edges: Array<EdgeSerial<U> | undefined> = []
-
-    for (const [id, node] of value.nodes.entries()) {
-      nodes[id as number] = Node.serialize(node)
-    }
-
-    for (const [id, edge] of value.edges.entries()) {
-      edges[id as number] = Edge.serialize(edge)
-    }
-
-    return {
-      directed: value.directed,
-      nodes,
-      edges
-    }
-  }
-
-  static validSerial<T, U>(value: unknown): value is GraphMapSerial<T, U> {
-    return !!value
-      && typeof value === 'object'
-      && typeof (value as GraphMapSerial<T, U>).directed === 'boolean'
-      && Array.isArray((value as GraphMapSerial<T, U>).nodes)
-      && Array.isArray((value as GraphMapSerial<T, U>).edges)
-      && (value as GraphMapSerial<T, U>).nodes.every((node) => node === undefined || Node.validSerial<T>(node))
-      && (value as GraphMapSerial<T, U>).edges.every((edge) => edge === undefined || Edge.validSerial<U>(edge))
-  }
-
-  static deserialize<T, U>(value: GraphMapSerial<T, U>, out = new GraphMap<T, U>(value.directed)) {
-    out.nodes.clear()
-    out.edges.clear()
-    out.recycledNodeIds = []
-    out.recycledEdgeIds = []
-    out.nextNodeId = value.nodes.length
-    out.nextEdgeId = value.edges.length
-    out.nodeCount = 0
-    out.edgeCount = 0
-
-    value.nodes.forEach((node, index) => {
-      if (!node) {
-        return
-      }
-
-      out.nodes.set(index as NodeId, Node.deserialize(node))
-      out.nodeCount += 1
-    })
-
-    value.edges.forEach((edge, index) => {
-      if (!edge) {
-        return
-      }
-
-      out.edges.set(index as EdgeId, Edge.deserialize(edge))
-      out.edgeCount += 1
-    })
-
-    return out
   }
 
   addNode(weight: T): NodeId {
@@ -390,5 +325,143 @@ export class GraphMap<T = unknown, U = unknown> implements
     }
 
     return (edge.from === from && edge.to === to) || (edge.from === to && edge.to === from)
+  }
+
+  static serialize<T, U>(value: GraphMap<T, U>) {
+    const nodes: GraphSerial<T, U>['nodes'] = {}
+    const edges: GraphSerial<T, U>['edges'] = {}
+
+    for (const [id, node] of value.nodes.entries()) {
+      const edgeIds: EdgeId[] = []
+
+      value.forEachNodeEdge(id, (edgeId) => {
+        const edge = value.getEdge(edgeId)
+        if (edge && edge.from === id) {
+          edgeIds.push(edgeId)
+        }
+      })
+
+      nodes[id] = {
+        edges: edgeIds,
+        ...(node.weight !== undefined ? { weight: node.weight } : {})
+      }
+    }
+
+    for (const [id, edge] of value.edges.entries()) {
+      edges[id] = {
+        from: edge.from,
+        to: edge.to,
+        ...(edge.weight !== undefined ? { weight: edge.weight } : {})
+      }
+    }
+
+    return {
+      directed: value.directed,
+      nodes,
+      edges
+    }
+  }
+
+  static validSerial<T, U>(value: unknown): value is GraphSerial<T, U> {
+    return validateGraphSerial<T, U>(value)
+  }
+
+  static deserialize<T, U>(value: GraphSerial<T, U>, out = new GraphMap<T, U>(value.directed)) {
+    const nodeIds = Object.keys(value.nodes)
+      .map((key) => Number(key) as NodeId)
+      .sort((left, right) => left - right)
+    const edgeIds = Object.keys(value.edges)
+      .map((key) => Number(key) as EdgeId)
+      .sort((left, right) => left - right)
+
+    out.nodes.clear()
+    out.edges.clear()
+    out.recycledNodeIds = []
+    out.recycledEdgeIds = []
+    out.nodeCount = 0
+    out.edgeCount = 0
+
+    for (const nodeId of nodeIds) {
+      const node = value.nodes[nodeId] as NonNullable<GraphSerial<T, U>['nodes'][NodeId]>
+      out.nodes.set(nodeId, new Node(node.weight as T))
+      out.nodeCount += 1
+    }
+
+    for (const edgeId of edgeIds) {
+      const edge = value.edges[edgeId] as NonNullable<GraphSerial<T, U>['edges'][EdgeId]>
+      out.edges.set(edgeId, new Edge(edge.from, edge.to, edge.weight as U))
+      out.edgeCount += 1
+    }
+
+    const maxNodeId = nodeIds.length ? nodeIds[nodeIds.length - 1] : -1
+    const maxEdgeId = edgeIds.length ? edgeIds[edgeIds.length - 1] : -1
+
+    out.nextNodeId = (maxNodeId + 1) as NodeId
+    out.nextEdgeId = (maxEdgeId + 1) as EdgeId
+
+    const recycledNodeIds: NodeId[] = []
+    const recycledEdgeIds: EdgeId[] = []
+
+    for (let id = 0; id <= maxNodeId; id += 1) {
+      if (!out.nodes.has(id as NodeId)) {
+        recycledNodeIds.push(id as NodeId)
+      }
+    }
+
+    for (let id = 0; id <= maxEdgeId; id += 1) {
+      if (!out.edges.has(id as EdgeId)) {
+        recycledEdgeIds.push(id as EdgeId)
+      }
+    }
+
+    out.recycledNodeIds = recycledNodeIds.reverse()
+    out.recycledEdgeIds = recycledEdgeIds.reverse()
+
+    const outgoing = new Map<NodeId, EdgeId[]>()
+    const incoming = new Map<NodeId, EdgeId[]>()
+
+    for (const nodeId of out.nodes.keys()) {
+      outgoing.set(nodeId, [])
+      incoming.set(nodeId, [])
+    }
+
+    for (const [nodeIdText, nodeRaw] of Object.entries(value.nodes)) {
+      const node = nodeRaw as NonNullable<GraphSerial<T, U>['nodes'][NodeId]>
+      const nodeId = Number(nodeIdText) as NodeId
+      const edgesForNode = outgoing.get(nodeId) as EdgeId[]
+
+      for (const edgeId of node.edges) {
+        edgesForNode.push(edgeId)
+      }
+    }
+
+    for (const [edgeIdText, edgeRaw] of Object.entries(value.edges)) {
+      const edge = edgeRaw as NonNullable<GraphSerial<T, U>['edges'][EdgeId]>
+      const edgeId = Number(edgeIdText) as EdgeId
+      incoming.get(edge.from)?.push(edgeId)
+      incoming.get(edge.to)?.push(edgeId)
+    }
+
+    for (const [nodeId, node] of out.nodes.entries()) {
+      const outgoingEdges = outgoing.get(nodeId) ?? []
+      for (let index = outgoingEdges.length - 1; index >= 0; index -= 1) {
+        const edgeId = outgoingEdges[index]
+        const edge = out.edges.get(edgeId) as Edge<U>
+
+        edge.next[0] = node.next[0]
+        node.next[0] = edgeId
+      }
+
+      const incomingEdges = incoming.get(nodeId) ?? []
+      for (let index = incomingEdges.length - 1; index >= 0; index -= 1) {
+        const edgeId = incomingEdges[index]
+        const edge = out.edges.get(edgeId) as Edge<U>
+
+        edge.next[1] = node.next[1]
+        node.next[1] = edgeId
+      }
+    }
+
+    return out
   }
 }

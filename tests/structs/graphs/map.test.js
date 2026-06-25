@@ -41,45 +41,73 @@ test('GraphMap serialize returns plain data', () => {
 
   assert.deepEqual(graph.serialize(), {
     directed: true,
-    nodes: [
-      {
-        next: [0, undefined],
+    nodes: {
+      0: {
+        edges: [0],
         weight: 'A'
       },
-      {
-        next: [undefined, 0],
+      1: {
+        edges: [],
         weight: 'B'
       }
-    ],
-    edges: [
-      {
+    },
+    edges: {
+      0: {
         from: a,
         to: b,
-        next: [undefined, undefined],
         weight: 7
       }
-    ]
+    }
   })
 })
 
 test('GraphMap validSerial accepts the expected shape', () => {
   assert.equal(GraphMap.validSerial({
     directed: true,
-    nodes: [
-      {
-        next: [0, undefined],
+    nodes: {
+      0: {
+        edges: [0],
         weight: 'A'
       }
-    ],
-    edges: [
-      {
+    },
+    edges: {
+      0: {
         from: 0,
-        to: 1,
-        next: [undefined, undefined],
+        to: 0,
         weight: 2
       }
-    ]
+    }
   }), true)
+})
+
+test('GraphMap deserialize restores sparse ids', () => {
+  const graph = GraphMap.deserialize({
+    directed: true,
+    nodes: {
+      2: {
+        edges: [5],
+        weight: 'A'
+      },
+      5: {
+        edges: [],
+        weight: 'B'
+      }
+    },
+    edges: {
+      5: {
+        from: 2,
+        to: 5,
+        weight: 7
+      }
+    }
+  })
+
+  assert.equal(graph.getNodeWeight(2), 'A')
+  assert.equal(graph.getNodeWeight(5), 'B')
+  assert.equal(graph.getEdgeWeight(5), 7)
+  assert.equal(graph.findEdgeId(2, 5), 5)
+  assert.equal(graph.addNode('C'), 0)
+  assert.equal(graph.addEdge(2, 0, 9), 0)
 })
 
 test('GraphMap deserialize restores data into an existing graph', () => {

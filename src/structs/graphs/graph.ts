@@ -1,11 +1,12 @@
 import type { EdgeAccessor, NodeEdgeIterable, NeighbourIterable, NodeAccessor, EdgeIterable } from '../../core'
 import type { EdgeId, NodeId } from '../../core/identifiers'
-import type { EdgeSerial, NodeSerial } from '../../core/serial'
+import type { GraphEdgeSerial, GraphNodeSerial, GraphSerial } from '../../core/serial'
+import { validateGraphSerial } from '../../core/serial'
 
-export type GraphSerial<T = unknown, U = unknown> = {
-  directed: boolean
-  nodes: NodeSerial<T>[]
-  edges: EdgeSerial<U>[]
+function sortedIndexKeys(value: object): number[] {
+  return Object.keys(value)
+    .map((key) => Number(key))
+    .sort((left, right) => left - right)
 }
 
 export class Node<T> {
@@ -14,41 +15,6 @@ export class Node<T> {
 
   constructor(weight: T) {
     this.weight = weight
-  }
-
-  serialize() {
-    return Node.serialize(this)
-  }
-
-  /**
-   * @param {unknown} value
-   */
-  static serialize<T>(value: Node<T>) {
-    return {
-      next: value.next,
-      weight: value.weight
-    }
-  }
-
-  static validSerial<T>(value: unknown): value is NodeSerial<T> {
-    return !!value
-      && typeof value === 'object'
-      && Array.isArray((value as NodeSerial<T>).next)
-      && (value as NodeSerial<T>).next.length === 2
-      && ((value as NodeSerial<T>).next[0] === undefined || typeof (value as NodeSerial<T>).next[0] === 'number')
-      && ((value as NodeSerial<T>).next[1] === undefined || typeof (value as NodeSerial<T>).next[1] === 'number')
-      && 'weight' in (value as object)
-  }
-
-  /**
-   * @param {NodeSerial<T>} value
-   * @param {Node<T>} [out]
-   */
-  static deserialize<T>(value: NodeSerial<T>, out = new Node(undefined as unknown as T)) {
-    out.next = value.next
-    out.weight = value.weight
-
-    return out
   }
 }
 
@@ -62,47 +28,6 @@ export class Edge<T> {
     this.from = from
     this.to = to
     this.weight = weight
-  }
-
-  serialize() {
-    return Edge.serialize(this)
-  }
-
-  /**
-   * @param {unknown} value
-   */
-  static serialize<T>(value: Edge<T>) {
-    return {
-      from: value.from,
-      to: value.to,
-      next: value.next,
-      weight: value.weight
-    }
-  }
-
-  static validSerial<T>(value: unknown): value is EdgeSerial<T> {
-    return !!value
-      && typeof value === 'object'
-      && typeof (value as EdgeSerial<T>).from === 'number'
-      && typeof (value as EdgeSerial<T>).to === 'number'
-      && Array.isArray((value as EdgeSerial<T>).next)
-      && (value as EdgeSerial<T>).next.length === 2
-      && ((value as EdgeSerial<T>).next[0] === undefined || typeof (value as EdgeSerial<T>).next[0] === 'number')
-      && ((value as EdgeSerial<T>).next[1] === undefined || typeof (value as EdgeSerial<T>).next[1] === 'number')
-      && 'weight' in (value as object)
-  }
-
-  /**
-   * @param {EdgeSerial<T>} value
-   * @param {Edge<T>} [out]
-   */
-  static deserialize<T>(value: EdgeSerial<T>, out = new Edge(undefined as unknown as NodeId, undefined as unknown as NodeId, undefined as unknown as T)) {
-    out.from = value.from
-    out.to = value.to
-    out.next = value.next
-    out.weight = value.weight
-
-    return out
   }
 }
 
@@ -122,38 +47,6 @@ export class Graph<T = unknown, U = unknown> implements
 
   serialize() {
     return Graph.serialize(this)
-  }
-
-  /**
-   * @param {Graph<T, U>} value
-   */
-  static serialize<T, U>(value: Graph<T, U>) {
-    return {
-      directed: value.directed,
-      nodes: value.nodes.map((node) => Node.serialize(node)),
-      edges: value.edges.map((edge) => Edge.serialize(edge))
-    }
-  }
-
-  static validSerial<T, U>(value: unknown): value is GraphSerial<T, U> {
-    return !!value
-      && typeof value === 'object'
-      && typeof (value as GraphSerial<T, U>).directed === 'boolean'
-      && Array.isArray((value as GraphSerial<T, U>).nodes)
-      && Array.isArray((value as GraphSerial<T, U>).edges)
-      && (value as GraphSerial<T, U>).nodes.every((node) => Node.validSerial<T>(node))
-      && (value as GraphSerial<T, U>).edges.every((edge) => Edge.validSerial<U>(edge))
-  }
-
-  /**
-   * @param {GraphSerial<T, U>} value
-   * @param {Graph<T, U>} [out]
-   */
-  static deserialize<T, U>(value: GraphSerial<T, U>, out = new Graph<T, U>(value.directed)) {
-    out.nodes = value.nodes.map((node) => Node.deserialize(node))
-    out.edges = value.edges.map((edge) => Edge.deserialize(edge))
-
-    return out
   }
 
   addNode(weight: T): NodeId {
@@ -464,5 +357,138 @@ export class Graph<T = unknown, U = unknown> implements
     }
 
     return (edge.from === from && edge.to === to) || (edge.from === to && edge.to === from)
+  }
+
+  static serialize<T, U>(value: Graph<T, U>) {
+    const nodes: GraphSerial<T, U>['nodes'] = {}
+    const edges: GraphSerial<T, U>['edges'] = {}
+
+    for (let nodeId = 0; nodeId < value.nodes.length; nodeId += 1) {
+      const node = value.nodes[nodeId]
+      if (!node) {
+        continue
+      }
+
+      const edgeIds: EdgeId[] = []
+      value.forEachNodeEdge(nodeId as NodeId, (edgeId) => {
+        const edge = value.getEdge(edgeId)
+        if (edge && edge.from === nodeId) {
+          edgeIds.push(edgeId)
+        }
+      })
+
+      nodes[nodeId as NodeId] = {
+        edges: edgeIds,
+        ...(node.weight !== undefined ? { weight: node.weight } : {})
+      }
+    }
+
+    for (let edgeId = 0; edgeId < value.edges.length; edgeId += 1) {
+      const edge = value.edges[edgeId]
+      if (!edge) {
+        continue
+      }
+
+      edges[edgeId as EdgeId] = {
+        from: edge.from,
+        to: edge.to,
+        ...(edge.weight !== undefined ? { weight: edge.weight } : {})
+      }
+    }
+
+    return {
+      directed: value.directed,
+      nodes,
+      edges
+    }
+  }
+
+  static validSerial<T, U>(value: unknown): value is GraphSerial<T, U> {
+    return validateGraphSerial<T, U>(value)
+  }
+
+  static deserialize<T, U>(value: GraphSerial<T, U>, out = new Graph<T, U>(value.directed)) {
+    const nodeRecords = value.nodes as Record<number, GraphNodeSerial<T> | undefined>
+    const edgeRecords = value.edges as Record<number, GraphEdgeSerial<U> | undefined>
+    const nodeIds = sortedIndexKeys(value.nodes)
+    const edgeIds = sortedIndexKeys(value.edges)
+    const nodeIdMap = new Map<NodeId, NodeId>()
+    const edgeIdMap = new Map<EdgeId, EdgeId>()
+    const outgoing = new Map<NodeId, EdgeId[]>()
+    const incoming = new Map<NodeId, EdgeId[]>()
+
+    out.nodes = []
+    out.edges = []
+
+    for (const nodeId of nodeIds) {
+      const serialNode = nodeRecords[nodeId] as GraphNodeSerial<T>
+      const denseNodeId = out.nodes.length as NodeId
+      out.nodes.push(new Node(serialNode.weight as T))
+      nodeIdMap.set(nodeId as NodeId, denseNodeId)
+      outgoing.set(denseNodeId, [])
+      incoming.set(denseNodeId, [])
+    }
+
+    for (const edgeId of edgeIds) {
+      const serialEdge = edgeRecords[edgeId] as GraphEdgeSerial<U>
+      const from = nodeIdMap.get(serialEdge.from)
+      const to = nodeIdMap.get(serialEdge.to)
+
+      const denseEdgeId = out.edges.length as EdgeId
+      out.edges.push(new Edge(from as NodeId, to as NodeId, serialEdge.weight as U))
+      edgeIdMap.set(edgeId as EdgeId, denseEdgeId)
+    }
+
+    for (const [nodeIdText, serialNodeRaw] of Object.entries(value.nodes)) {
+      const serialNode = serialNodeRaw as GraphNodeSerial<T>
+      const denseNodeId = nodeIdMap.get(Number(nodeIdText) as NodeId)
+      const edgesForNode = outgoing.get(denseNodeId as NodeId) as EdgeId[]
+
+      for (const serialEdgeId of serialNode.edges) {
+        const denseEdgeId = edgeIdMap.get(serialEdgeId)
+        edgesForNode.push(denseEdgeId as EdgeId)
+      }
+    }
+
+    for (const [edgeIdText, serialEdgeRaw] of Object.entries(value.edges)) {
+      const serialEdge = serialEdgeRaw as GraphEdgeSerial<U>
+      const denseEdgeId = edgeIdMap.get(Number(edgeIdText) as EdgeId)
+      const edge = out.edges[denseEdgeId as EdgeId]
+      const from = nodeIdMap.get(serialEdge.from)
+      const to = nodeIdMap.get(serialEdge.to)
+
+      edge.from = from as NodeId
+      edge.to = to as NodeId
+
+      const fromIncoming = incoming.get(from as NodeId)
+      const toIncoming = incoming.get(to as NodeId)
+
+      fromIncoming?.push(denseEdgeId as EdgeId)
+      toIncoming?.push(denseEdgeId as EdgeId)
+    }
+
+    for (let nodeId = 0; nodeId < out.nodes.length; nodeId += 1) {
+      const node = out.nodes[nodeId] as Node<T>
+
+      const outgoingEdges = outgoing.get(nodeId as NodeId) ?? []
+      for (let index = outgoingEdges.length - 1; index >= 0; index -= 1) {
+        const edgeId = outgoingEdges[index]
+        const edge = out.edges[edgeId] as Edge<U>
+
+        edge.next[0] = node.next[0]
+        node.next[0] = edgeId
+      }
+
+      const incomingEdges = incoming.get(nodeId as NodeId) ?? []
+      for (let index = incomingEdges.length - 1; index >= 0; index -= 1) {
+        const edgeId = incomingEdges[index]
+        const edge = out.edges[edgeId] as Edge<U>
+
+        edge.next[1] = node.next[1]
+        node.next[1] = edgeId
+      }
+    }
+
+    return out
   }
 }

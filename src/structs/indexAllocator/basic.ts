@@ -19,6 +19,10 @@ export class IndexAllocator<T extends number = number> {
     return index as T
   }
 
+  mapIndex(index: T){
+    return index as number
+  }
+
   count(): number {
     return this.nextid - 1
   }

@@ -1,4 +1,4 @@
-import { packInto64Int, unpackFrom64Int } from "../../pack";
+import { packInto64Int, unpackFrom64Int, unpackLowBitsFrom64Int } from "../../pack";
 
 export class GenerationalIndexAllocator<T extends number = number> {
   private nextid = 0
@@ -21,6 +21,10 @@ export class GenerationalIndexAllocator<T extends number = number> {
     this.nextid += 1
 
     return packInto64Int(index, 1) as T
+  }
+
+  mapIndex(index: T): number {
+    return unpackLowBitsFrom64Int(index)
   }
 
   count(): number {

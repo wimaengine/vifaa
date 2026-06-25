@@ -1,4 +1,4 @@
-import type { EdgeAccessor, EdgeIterable, NeighbourIterable, NodeAccessor } from '../../core'
+import type { EdgeAccessor, NodeEdgeIterable, NeighbourIterable, NodeAccessor, EdgeIterable } from '../../core'
 import type { EdgeId, NodeId } from '../../core/identifiers'
 import type { EdgeSerial, NodeSerial } from '../../core/serial'
 
@@ -109,8 +109,9 @@ export class Edge<T> {
 export class Graph<T = unknown, U = unknown> implements
   NodeAccessor<Node<T>, NodeId>,
   EdgeAccessor<Edge<U>, EdgeId>,
+  EdgeIterable<EdgeId>,
   NeighbourIterable<NodeId>,
-  EdgeIterable<NodeId, EdgeId> {
+  NodeEdgeIterable<NodeId, EdgeId> {
   private nodes: Node<T>[] = []
   private edges: Edge<U>[] = []
   readonly directed: boolean
@@ -195,6 +196,12 @@ export class Graph<T = unknown, U = unknown> implements
     return this.edges[id]
   }
 
+  forEachNode(callback: (nodeId: NodeId) => void): void {
+    for (let id = 0; id < this.nodes.length; id += 1) {
+      callback(id as NodeId)
+    }
+  }
+
   hasEdge(from: NodeId, to: NodeId): boolean {
     return this.findEdgeId(from, to) !== undefined
   }
@@ -215,7 +222,15 @@ export class Graph<T = unknown, U = unknown> implements
     return edge.weight
   }
 
-  forEachEdge(id: NodeId, callback: (edgeId: EdgeId) => void): void {
+  forEachEdge(callback: (edgeId: EdgeId) => void): void {
+    for (let id = 0; id < this.edges.length; id += 1) {
+      if (this.edges[id] !== undefined) {
+        callback(id as EdgeId)
+      }
+    }
+  }
+
+  forEachNodeEdge(id: NodeId, callback: (edgeId: EdgeId) => void): void {
     const node = this.getNode(id)
     if (!node) {
       return
@@ -256,7 +271,7 @@ export class Graph<T = unknown, U = unknown> implements
   }
 
   forEachNeighbour(id: NodeId, callback: (nodeId: NodeId) => void): void {
-    this.forEachEdge(id, (edgeId) => {
+    this.forEachNodeEdge(id, (edgeId) => {
       const edge = this.getEdge(edgeId)
       if (!edge) {
         return

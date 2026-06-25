@@ -1,18 +1,15 @@
 import type { NeighbourIterable, NodeAccessor } from '../core'
 import type { NodeId } from '../structs/graphs/graph'
 
-export function dfs<T>(graph:NodeAccessor<T> & NeighbourIterable<NodeId>, start: NodeId, visit: (nodeId: NodeId) => void): void {
+export function dfs<T>(graph: NodeAccessor<T> & NeighbourIterable<NodeId>, start: NodeId, visit: (nodeId: NodeId) => void): void {
   const nodeCount = graph.getNodeCount()
   const visited = new Array<boolean>(nodeCount).fill(false)
-  const stack: NodeId[] = []
+  const stack: NodeId[] = [start]
+  let top = 1
 
-  stack.push(start)
-
-  while (stack.length > 0) {
-    const nodeId = stack.pop()
-    if (nodeId === undefined) {
-      break
-    }
+  while (top > 0) {
+    top -= 1
+    const nodeId = stack[top]
 
     if (visited[nodeId]) {
       continue
@@ -23,7 +20,8 @@ export function dfs<T>(graph:NodeAccessor<T> & NeighbourIterable<NodeId>, start:
 
     graph.forEachNeighbour(nodeId, (neighbour) => {
       if (!visited[neighbour]) {
-        stack.push(neighbour)
+        stack[top] = neighbour
+        top += 1
       }
     })
   }

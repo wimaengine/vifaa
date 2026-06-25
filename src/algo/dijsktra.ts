@@ -2,6 +2,7 @@ import type { NodeAccessor, NeighbourIterable } from '../core'
 import type { CostFunc } from '../types'
 import type { Node, NodeId } from '../structs/graphs/graph'
 import { GraphPath, GraphPathNode } from '../structs/graphs/path'
+import { PriorityQueue } from '../structs/priorityqueue'
 
 export function dijkstra<T>(
   graph: NodeAccessor<Node<T>, NodeId> & NeighbourIterable<NodeId>,
@@ -10,21 +11,22 @@ export function dijkstra<T>(
   end: NodeId | undefined = undefined,
 ): GraphPath {
   const visited = new Set<NodeId>()
-  const unvisited: NodeId[] = [start]
+  const unvisited = new PriorityQueue<[NodeId, number]>((a, b) => a[1] < b[1])
   const path = new GraphPath()
 
   path.set(start, new GraphPathNode(undefined, 0))
+  unvisited.push([start, 0])
 
-  while (unvisited.length) {
-    unvisited.sort(
-      (a, b) =>
-        (path.get(a)?.gCost ?? Number.MAX_SAFE_INTEGER)
-        - (path.get(b)?.gCost ?? Number.MAX_SAFE_INTEGER),
-    )
-
-    const currentid = unvisited.shift()
-    if (currentid === undefined) {
+  while (unvisited.size()) {
+    const popped = unvisited.pop()
+    if (!popped) {
       break
+    }
+
+    const [currentid, currentCost] = popped
+    const currentPathNode = path.get(currentid)
+    if (!currentPathNode || visited.has(currentid) || currentPathNode.gCost !== currentCost) {
+      continue
     }
 
     if (end !== undefined && currentid === end) {
@@ -33,7 +35,6 @@ export function dijkstra<T>(
 
     visited.add(currentid)
     const current = graph.getNode(currentid)
-    const currentPathNode = path.getOrSet(currentid)
 
     graph.forEachNeighbour(currentid, (neighbourid) => {
       if (visited.has(neighbourid)) {
@@ -48,10 +49,11 @@ export function dijkstra<T>(
         if (cost < neighborPathNode.gCost) {
           neighborPathNode.gCost = cost
           neighborPathNode.parent = currentid
+          unvisited.push([neighbourid, cost])
         }
       } else {
-        unvisited.push(neighbourid)
         path.set(neighbourid, new GraphPathNode(currentid, cost))
+        unvisited.push([neighbourid, cost])
       }
     })
   }

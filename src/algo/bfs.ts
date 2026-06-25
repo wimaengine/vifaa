@@ -5,15 +5,14 @@ export function bfs<T>(graph: NodeAccessor<T> & NeighbourIterable<NodeId>, start
   const nodeCount = graph.getNodeCount()
   const visited = new Array<boolean>(nodeCount).fill(false)
   const queue: NodeId[] = []
+  let head = 0
 
   visited[start] = true
   queue.push(start)
 
-  while (queue.length > 0) {
-    const nodeId = queue.shift()
-    if (nodeId === undefined) {
-      break
-    }
+  while (head < queue.length) {
+    const nodeId = queue[head]
+    head += 1
 
     visit(nodeId)
 

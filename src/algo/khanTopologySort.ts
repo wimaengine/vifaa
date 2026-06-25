@@ -1,6 +1,7 @@
-import type { Graph, NodeId } from '../structs/graphs/graph'
+import type { EdgeAccessor, NeighbourIterable, NodeAccessor } from '../core'
+import type { Edge, NodeId } from '../structs/graphs/graph'
 
-export function kahnTopologySort<T, U>(graph: Graph<T, U>): NodeId[] | undefined {
+export function kahnTopologySort<T, U>(graph: NodeAccessor<T> & EdgeAccessor<Edge<U>> & NeighbourIterable<NodeId>): NodeId[] | undefined {
   const nodeCount = graph.getNodeCount()
   const edges = graph.getEdges()
   const inDegree = new Array<number>(nodeCount).fill(0)

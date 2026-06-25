@@ -1,10 +1,11 @@
+import type { NodeAccessor, NeighbourIterable } from '../core'
 import type { CostFunc } from '../types'
-import type { Graph, NodeId } from '../structs/graphs/graph'
+import type { Node, NodeId } from '../structs/graphs/graph'
 import { GraphPath, GraphPathNode } from '../structs/graphs/path'
 import { PriorityQueue } from '../structs/priorityqueue'
 
-export function aStar<T, U>(
-  graph: Graph<T, U>,
+export function aStar<T>(
+  graph: NodeAccessor<Node<T>, NodeId> & NeighbourIterable<NodeId>,
   costFunc: CostFunc<T>,
   start: NodeId,
   end: NodeId,

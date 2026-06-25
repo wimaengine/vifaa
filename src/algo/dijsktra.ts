@@ -1,9 +1,10 @@
+import type { NodeAccessor, NeighbourIterable } from '../core'
 import type { CostFunc } from '../types'
-import type { Graph, NodeId } from '../structs/graphs/graph'
+import type { Node, NodeId } from '../structs/graphs/graph'
 import { GraphPath, GraphPathNode } from '../structs/graphs/path'
 
-export function dijkstra<T, U>(
-  graph: Graph<T, U>,
+export function dijkstra<T>(
+  graph: NodeAccessor<Node<T>, NodeId> & NeighbourIterable<NodeId>,
   costFunc: CostFunc<T>,
   start: NodeId,
   end: NodeId | undefined = undefined,

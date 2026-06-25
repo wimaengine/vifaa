@@ -157,7 +157,7 @@ export class Graph<T = unknown, U = unknown> implements
 
   addNode(weight: T): NodeId {
     const node = new Node(weight)
-    const id = this.nodes.length
+    const id = this.nodes.length as NodeId
     this.nodes.push(node)
     return id
   }
@@ -172,7 +172,7 @@ export class Graph<T = unknown, U = unknown> implements
   }
 
   addEdgeUnchecked(from: NodeId, to: NodeId, weight: U): EdgeId {
-    const id = this.edges.length
+    const id = this.edges.length as EdgeId
     const edge = new Edge(from, to, weight)
 
     this.edges.push(edge)
@@ -356,7 +356,7 @@ export class Graph<T = unknown, U = unknown> implements
     if (id !== lastId) {
       const lastEdge = this.edges[lastId]
       this.edges[id] = lastEdge
-      this.#replaceEdgeId(lastId, id)
+      this.#replaceEdgeId(lastId as EdgeId, id)
     }
 
     this.edges.pop()

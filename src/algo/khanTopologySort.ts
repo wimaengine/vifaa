@@ -14,7 +14,7 @@ export function kahnTopologySort<T, U>(graph: NodeAccessor<T> & EdgeAccessor<Edg
   const queue: NodeId[] = []
   for (let i = 0; i < nodeCount; i++) {
     if (inDegree[i] === 0) {
-      queue.push(i)
+      queue.push(i as NodeId)
     }
   }
 

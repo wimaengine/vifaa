@@ -35,8 +35,16 @@ export function unpackFrom64Int(value: number) {
 
   // We cant use bit manipulation as javascript has a 32 bit limit on
   // manipulating "integers"
-  const low = value % 2 ** 32;
-  const high = Math.floor(value / 2 ** 32);
+  const low = unpackLowBitsFrom64Int(value);
+  const high = unpackHighBitsFrom64Int(value);
 
   return [low, high];
+}
+
+export function unpackLowBitsFrom64Int(value: number){
+  return value % 2 ** 32
+}
+
+export function unpackHighBitsFrom64Int(value: number){
+  return Math.floor(value / 2 ** 32)
 }

@@ -1,19 +1,6 @@
 import type { EdgeAccessor, EdgeIterable, NeighbourIterable, NodeAccessor } from '../../core'
-
-export type EdgeId = number
-export type NodeId = number
-
-export type NodeSerial<T = unknown> = {
-  next: [EdgeId | undefined, EdgeId | undefined]
-  weight: T
-}
-
-export type EdgeSerial<T = unknown> = {
-  from: NodeId
-  to: NodeId
-  next: [EdgeId | undefined, EdgeId | undefined]
-  weight: T
-}
+import type { EdgeId, NodeId } from '../../core/identifiers'
+import type { EdgeSerial, NodeSerial } from '../../core/serial'
 
 export type GraphSerial<T = unknown, U = unknown> = {
   directed: boolean

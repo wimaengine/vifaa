@@ -1,6 +1,7 @@
 import type { NodeAccessor, NeighbourIterable } from '../core'
+import type { NodeId } from '../core/identifiers'
 import type { CostFunc } from '../types'
-import type { Node, NodeId } from '../structs/graphs/graph'
+import type { Node } from '../structs/graphs/graph'
 import { GraphPath, GraphPathNode } from '../structs/graphs/path'
 import { PriorityQueue } from '../structs/priorityqueue'
 

@@ -1,4 +1,4 @@
-import type { NodeId } from './graph'
+import type { NodeId } from '../../core/identifiers'
 
 export type GraphPathNodeSerial = {
   parent: NodeId | undefined

@@ -1,1 +1,1 @@
-export type CostFunc<T> = (a: T, b: T) => number
+export type CostFunc<EdgeId extends number> = (edgeId: EdgeId) => number

@@ -1,16 +1,17 @@
-import type { NodeAccessor, NeighbourIterable } from '../core'
-import type { NodeId } from '../core/identifiers'
-import type { CostFunc } from '../types'
-import type { Node } from '../structs/graphs/graph'
-import { GraphPath, GraphPathNode } from '../structs/graphs/path'
-import { PriorityQueue } from '../structs/priorityqueue'
+import type { EdgeAccessor, NodeAccessor, NodeEdgeIterable } from '../core'
+import type { CostFunc, HeuristicFunc } from '../types'
+import type { EdgeId, NodeId } from '../core/identifiers'
+import type { Edge, Node } from '../structs/graphs'
+import { GraphPath, GraphPathNode } from '../structs'
+import { PriorityQueue } from '../structs'
 
-export function aStar<T>(
-  graph: NodeAccessor<Node<T>, NodeId> & NeighbourIterable<NodeId>,
-  costFunc: CostFunc<T>,
+export function aStar(
+  graph: NodeAccessor<Node<unknown>, NodeId> & EdgeAccessor<Edge<unknown>, EdgeId> & NodeEdgeIterable<NodeId, EdgeId>,
+  costFunc: CostFunc<EdgeId>,
+  heuristicFunc: HeuristicFunc,
   start: NodeId,
   end: NodeId,
-): GraphPath {
+): GraphPath<NodeId> {
   const target = graph.getNode(end)
   if (!target) {
     return new GraphPath()
@@ -18,16 +19,15 @@ export function aStar<T>(
 
   const visited = new Set<NodeId>()
   const unvisited = new PriorityQueue<[NodeId, number]>((a, b) => a[1] < b[1])
-  const path = new GraphPath()
+  const path = new GraphPath<NodeId>()
 
-  unvisited.push([start, 0])
-
-  const startNode = graph.getNode(start)
-  if (!startNode) {
+  if (!graph.getNode(start)) {
     return path
   }
 
-  path.set(start, new GraphPathNode(undefined, 0, costFunc(startNode.weight, target.weight)))
+  const startHCost = heuristicFunc(start, end)
+  path.set(start, new GraphPathNode<NodeId>(undefined, 0, startHCost))
+  unvisited.push([start, startHCost])
 
   while (unvisited.size()) {
     const popped = unvisited.pop()
@@ -36,8 +36,8 @@ export function aStar<T>(
     }
 
     const currentid = popped[0]
-    const current = graph.getNode(currentid)
-    if (!current) {
+    const currentPathNode = path.get(currentid)
+    if (!currentPathNode || !graph.getNode(currentid) || visited.has(currentid) || currentPathNode.fCost() !== popped[1]) {
       continue
     }
 
@@ -47,32 +47,31 @@ export function aStar<T>(
       break
     }
 
-    graph.forEachNeighbour(currentid, (neighbourid) => {
+    graph.forEachNodeEdge(currentid, (edgeid) => {
+      const edge = graph.getEdge(edgeid)
+      if (!edge) {
+        return
+      }
+
+      const neighbourid = (edge.from === currentid ? edge.to : edge.from) as NodeId
       if (visited.has(neighbourid)) {
         return
       }
 
-      const neighbour = graph.getNode(neighbourid)
-      if (!neighbour) {
-        return
-      }
-
       const neighborPathNode = path.get(neighbourid)
-      const currentPathNode = path.get(currentid)
-      if (!currentPathNode) {
-        return
-      }
-
-      const cost = currentPathNode.gCost + costFunc(current.weight, neighbour.weight)
+      const cost = currentPathNode.gCost + costFunc(edgeid)
 
       if (neighborPathNode) {
         if (cost < neighborPathNode.gCost) {
           neighborPathNode.gCost = cost
+          neighborPathNode.hCost = heuristicFunc(neighbourid, end)
           neighborPathNode.parent = currentid
+          unvisited.push([neighbourid, cost + neighborPathNode.hCost])
         }
       } else {
-        unvisited.push([neighbourid, cost])
-        path.set(neighbourid, new GraphPathNode(currentid, cost, costFunc(neighbour.weight, target.weight)))
+        const hCost = heuristicFunc(neighbourid, end)
+        unvisited.push([neighbourid, cost + hCost])
+        path.set(neighbourid, new GraphPathNode<NodeId>(currentid, cost, hCost))
       }
     })
   }

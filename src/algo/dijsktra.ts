@@ -1,21 +1,20 @@
-import type { NodeAccessor, NeighbourIterable } from '../core'
-import type { NodeId } from '../core/identifiers'
+import type { EdgeAccessor, EdgeId, NodeEdgeIterable, NodeId } from '../core'
 import type { CostFunc } from '../types'
-import type { Node } from '../structs/graphs/graph'
-import { GraphPath, GraphPathNode } from '../structs/graphs/path'
-import { PriorityQueue } from '../structs/priorityqueue'
+import { GraphPath, GraphPathNode } from '../structs'
+import { PriorityQueue } from '../structs'
+import type { Edge } from '../structs'
 
-export function dijkstra<T>(
-  graph: NodeAccessor<Node<T>, NodeId> & NeighbourIterable<NodeId>,
-  costFunc: CostFunc<T>,
+export function dijkstra(
+  graph: EdgeAccessor<Edge<unknown>, EdgeId> & NodeEdgeIterable<NodeId, EdgeId>,
+  costFunc: CostFunc<EdgeId>,
   start: NodeId,
   end: NodeId | undefined = undefined,
-): GraphPath {
+): GraphPath<NodeId> {
   const visited = new Set<NodeId>()
   const unvisited = new PriorityQueue<[NodeId, number]>((a, b) => a[1] < b[1])
-  const path = new GraphPath()
+  const path = new GraphPath<NodeId>()
 
-  path.set(start, new GraphPathNode(undefined, 0))
+  path.set(start, new GraphPathNode<NodeId>(undefined, 0))
   unvisited.push([start, 0])
 
   while (unvisited.size()) {
@@ -35,15 +34,19 @@ export function dijkstra<T>(
     }
 
     visited.add(currentid)
-    const current = graph.getNode(currentid)
+    graph.forEachNodeEdge(currentid, (edgeid) => {
+      const edge = graph.getEdge(edgeid)
 
-    graph.forEachNeighbour(currentid, (neighbourid) => {
+      if(!edge){
+        return
+      }
+
+      const neighbourid = edge.from === currentid ? edge.to : edge.from
       if (visited.has(neighbourid)) {
         return
       }
 
-      const neighbour = graph.getNode(neighbourid)
-      const cost = currentPathNode.gCost + ((current && neighbour) ? costFunc(current.weight, neighbour.weight) : 0)
+      const cost = currentPathNode.gCost + costFunc(edgeid)
       const neighborPathNode = path.get(neighbourid)
 
       if (neighborPathNode) {
@@ -53,7 +56,7 @@ export function dijkstra<T>(
           unvisited.push([neighbourid, cost])
         }
       } else {
-        path.set(neighbourid, new GraphPathNode(currentid, cost))
+        path.set(neighbourid, new GraphPathNode<NodeId>(currentid, cost))
         unvisited.push([neighbourid, cost])
       }
     })

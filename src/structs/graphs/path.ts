@@ -1,12 +1,10 @@
-import type { NodeId } from '../../core/identifiers'
-
 export type GraphPathNodeSerial = {
-  parent: NodeId | undefined
+  parent: number | undefined
   gCost: number
   hCost: number
 }
 
-export class GraphPathNode {
+export class GraphPathNode<NodeId extends number> {
   gCost: number
   hCost: number
   parent: NodeId | undefined
@@ -26,9 +24,8 @@ export class GraphPathNode {
   }
 
   /**
-   * @param {unknown} value
    */
-  static serialize(value: GraphPathNode) {
+  static serialize<T extends number>(value: GraphPathNode<T>) {
     return {
       parent: value.parent,
       gCost: value.gCost,
@@ -47,10 +44,10 @@ export class GraphPathNode {
 
   /**
    * @param {GraphPathNodeSerial} value
-   * @param {GraphPathNode} [out]
+   * @param {GraphPathNode<NodeId>} [out]
    */
-  static deserialize(value: GraphPathNodeSerial, out = new GraphPathNode()) {
-    out.parent = value.parent
+  static deserialize<T extends number>(value: GraphPathNodeSerial, out = new GraphPathNode<T>()) {
+    out.parent = value.parent as T | undefined
     out.gCost = value.gCost
     out.hCost = value.hCost
 
@@ -58,26 +55,26 @@ export class GraphPathNode {
   }
 }
 
-export class GraphPath {
-  private inner = new Map<NodeId, GraphPathNode>()
+export class GraphPath<NodeId extends number> {
+  private inner = new Map<NodeId, GraphPathNode<NodeId>>()
 
-  set(id: NodeId, value: GraphPathNode): GraphPathNode {
+  set(id: NodeId, value: GraphPathNode<NodeId>): GraphPathNode<NodeId> {
     this.inner.set(id, value)
     return value
   }
 
-  get(id: NodeId): GraphPathNode | undefined {
+  get(id: NodeId): GraphPathNode<NodeId> | undefined {
     return this.inner.get(id)
   }
 
-  getOrSet(key: NodeId): GraphPathNode {
+  getOrSet(key: NodeId): GraphPathNode<NodeId> {
     const node = this.get(key)
 
     if (node) {
       return node
     }
 
-    return this.set(key, new GraphPathNode())
+    return this.set(key, new GraphPathNode<NodeId>())
   }
 
   delete(id: NodeId): void {
@@ -107,7 +104,7 @@ export class GraphPath {
     return path.reverse()
   }
 
-  forEach(callback: (id: NodeId, node: GraphPathNode) => void): void {
+  forEach(callback: (id: NodeId, node: GraphPathNode<NodeId>) => void): void {
     for (const [id, node] of this.inner.entries()) {
       callback(id, node)
     }

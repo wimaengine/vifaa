@@ -1,4 +1,4 @@
-import type { EdgeIterable, NeighbourIterable } from '../../core'
+import type { EdgeAccessor, EdgeIterable, NeighbourIterable, NodeAccessor } from '../../core'
 
 export type EdgeId = number
 export type NodeId = number
@@ -119,7 +119,11 @@ export class Edge<T> {
   }
 }
 
-export class Graph<T = unknown, U = unknown> implements NeighbourIterable<NodeId>, EdgeIterable<NodeId, EdgeId> {
+export class Graph<T = unknown, U = unknown> implements
+  NodeAccessor<Node<T>, NodeId>,
+  EdgeAccessor<Edge<U>, EdgeId>,
+  NeighbourIterable<NodeId>,
+  EdgeIterable<NodeId, EdgeId> {
   private nodes: Node<T>[] = []
   private edges: Edge<U>[] = []
   readonly directed: boolean

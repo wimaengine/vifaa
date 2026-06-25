@@ -1,4 +1,5 @@
 export * from './graph'
 export * from './map'
-export * from './stableGraph'
+export * from './stable'
+export * from './primitives'
 export * from './path'

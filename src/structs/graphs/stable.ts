@@ -3,7 +3,7 @@ import type { EdgeId, NodeId } from '../../core/identifiers'
 import type { GraphSerial } from '../../core/serial'
 import { validateGraphSerial } from '../../core/serial'
 import { IndexAllocator } from '../indexAllocator'
-import { Edge, Node } from './graph'
+import { Edge, Node } from './primitives'
 
 function hasOwnProperty<T extends object>(value: T, key: PropertyKey): boolean {
   return Object.prototype.hasOwnProperty.call(value, key)

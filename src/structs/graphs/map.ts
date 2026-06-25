@@ -2,7 +2,7 @@ import type { EdgeAccessor, EdgeIterable, NeighbourIterable, NodeAccessor, NodeE
 import type { EdgeId, NodeId } from '../../core/identifiers'
 import type { GraphSerial } from '../../core/serial'
 import { validateGraphSerial } from '../../core/serial'
-import { Edge, Node } from './graph'
+import { Edge, Node } from './primitives'
 
 export class GraphMap<T = unknown, U = unknown> implements
   NodeAccessor<Node<T>, NodeId>,

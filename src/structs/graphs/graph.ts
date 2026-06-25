@@ -2,33 +2,14 @@ import type { EdgeAccessor, NodeEdgeIterable, NeighbourIterable, NodeAccessor, E
 import type { EdgeId, NodeId } from '../../core/identifiers'
 import type { GraphEdgeSerial, GraphNodeSerial, GraphSerial } from '../../core/serial'
 import { validateGraphSerial } from '../../core/serial'
+import { Edge, Node } from './primitives'
+
+export { Edge, Node } from './primitives'
 
 function sortedIndexKeys(value: object): number[] {
   return Object.keys(value)
     .map((key) => Number(key))
     .sort((left, right) => left - right)
-}
-
-export class Node<T> {
-  next: [EdgeId | undefined, EdgeId | undefined] = [undefined, undefined]
-  weight: T
-
-  constructor(weight: T) {
-    this.weight = weight
-  }
-}
-
-export class Edge<T> {
-  from: NodeId
-  to: NodeId
-  next: [EdgeId | undefined, EdgeId | undefined] = [undefined, undefined]
-  weight: T
-
-  constructor(from: NodeId, to: NodeId, weight: T) {
-    this.from = from
-    this.to = to
-    this.weight = weight
-  }
 }
 
 export class Graph<T = unknown, U = unknown> implements

@@ -31,8 +31,8 @@ test('StableGraph serialize returns plain data', () => {
   })
 })
 
-test('StableGraph validSerial accepts the expected shape', () => {
-  assert.equal(StableGraph.validSerial({
+test('StableGraph validateSerial accepts the expected shape', () => {
+  assert.equal(StableGraph.validateSerial({
     directed: true,
     nodes: {
       0: {

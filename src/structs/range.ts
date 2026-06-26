@@ -33,7 +33,7 @@ export class Range {
     }
   }
 
-  static validSerial(value: unknown): value is RangeSerial {
+  static validateSerial(value: unknown): value is RangeSerial {
     return !!value
       && typeof value === 'object'
       && typeof (value as RangeSerial).start === 'number'

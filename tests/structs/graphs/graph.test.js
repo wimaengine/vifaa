@@ -36,8 +36,8 @@ test('Graph serialize returns plain data', () => {
   })
 })
 
-test('Graph validSerial accepts the expected shape', () => {
-  assert.equal(Graph.validSerial({
+test('Graph validateSerial accepts the expected shape', () => {
+  assert.equal(Graph.validateSerial({
     directed: true,
     nodes: {
       0: {
@@ -55,8 +55,8 @@ test('Graph validSerial accepts the expected shape', () => {
   }), true)
 })
 
-test('Graph validSerial rejects malformed data', () => {
-  assert.equal(Graph.validSerial({
+test('Graph validateSerial rejects malformed data', () => {
+  assert.equal(Graph.validateSerial({
     directed: true,
     nodes: {
       0: {

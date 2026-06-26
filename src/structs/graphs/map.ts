@@ -362,7 +362,7 @@ export class GraphMap<T = unknown, U = unknown> implements
     }
   }
 
-  static validSerial<T, U>(value: unknown): value is GraphSerial<T, U> {
+  static validateSerial<T, U>(value: unknown): value is GraphSerial<T, U> {
     return validateGraphSerial<T, U>(value)
   }
 

@@ -25,15 +25,15 @@ test('Range deserialize restores data into an existing range', () => {
   assert.equal(range.end, 12)
 })
 
-test('Range validSerial accepts the expected shape', () => {
-  assert.equal(Range.validSerial({
+test('Range validateSerial accepts the expected shape', () => {
+  assert.equal(Range.validateSerial({
     start: 1,
     end: 4
   }), true)
 })
 
-test('Range validSerial rejects malformed data', () => {
-  assert.equal(Range.validSerial({
+test('Range validateSerial rejects malformed data', () => {
+  assert.equal(Range.validateSerial({
     start: '1',
     end: 4
   }), false)

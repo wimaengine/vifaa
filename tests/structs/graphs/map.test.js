@@ -61,8 +61,8 @@ test('GraphMap serialize returns plain data', () => {
   })
 })
 
-test('GraphMap validSerial accepts the expected shape', () => {
-  assert.equal(GraphMap.validSerial({
+test('GraphMap validateSerial accepts the expected shape', () => {
+  assert.equal(GraphMap.validateSerial({
     directed: true,
     nodes: {
       0: {

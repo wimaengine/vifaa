@@ -50,16 +50,16 @@ test('GraphPathNode deserialize restores data into an existing node', () => {
   assert.equal(node.hCost, 13)
 })
 
-test('GraphPathNode validSerial accepts the expected shape', () => {
-  assert.equal(GraphPathNode.validSerial({
+test('GraphPathNode validateSerial accepts the expected shape', () => {
+  assert.equal(GraphPathNode.validateSerial({
     parent: 2,
     gCost: 3,
     hCost: 5
   }), true)
 })
 
-test('GraphPathNode validSerial rejects malformed data', () => {
-  assert.equal(GraphPathNode.validSerial({
+test('GraphPathNode validateSerial rejects malformed data', () => {
+  assert.equal(GraphPathNode.validateSerial({
     parent: '2',
     gCost: 3,
     hCost: 5

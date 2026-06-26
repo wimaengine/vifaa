@@ -33,7 +33,7 @@ export class GraphPathNode<NodeId extends number> {
     }
   }
 
-  static validSerial(value: unknown): value is GraphPathNodeSerial {
+  static validateSerial(value: unknown): value is GraphPathNodeSerial {
     return !!value
       && typeof value === 'object'
       && (typeof (value as GraphPathNodeSerial).parent === 'number'
